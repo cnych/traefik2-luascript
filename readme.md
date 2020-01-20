@@ -78,26 +78,22 @@ echo "GET http://localhost/" | vegeta attack -rate 2000 -duration=60s | tee resu
 Traefik config
 
 ```toml
-[providers]
-   [providers.file]
-
 [http.routers]
   [http.routers.router1]
-    Service = "service1"
-    Middlewares = ["middleware-luascript"]
-    Rule = "Host(`localhost`)"
+    service = "service1"
+    middlewares = ["middleware-luascript"]
+    rule = "Host(`localhost`)"
 
 [http.middlewares]
- [http.middlewares.middleware-luascript.LuaScript]
+ [http.middlewares.middleware-luascript.lua]
     script = "middleware.lua"
 
 [http.services]
  [http.services.service1]
-   [http.services.service1.LoadBalancer]
-
-     [[http.services.service1.LoadBalancer.Servers]]
-       URL = "http://127.0.0.1:2000"
-       Weight = 1
+   [http.services.service1.loadBalancer]
+     [[http.services.service1.loadBalancer.Servers]]
+       url = "http://127.0.0.1:2000"
+       weight = 1
 ```
 
 Lua script
@@ -127,21 +123,18 @@ Error Set:
 Traefik config
 
 ```toml
-[providers]
-   [providers.file]
-
 [http.routers]
   [http.routers.router1]
-    Service = "service1"
-    Rule = "Host(`localhost`)"
+    service = "service1"
+    rule = "Host(`localhost`)"
 
 [http.services]
  [http.services.service1]
-   [http.services.service1.LoadBalancer]
+   [http.services.service1.loadBalancer]
 
      [[http.services.service1.LoadBalancer.Servers]]
-       URL = "http://127.0.0.1:2000"
-       Weight = 1
+       url = "http://127.0.0.1:2000"
+       weight = 1
 ```
 
 Results
@@ -171,7 +164,7 @@ cd traefik
 Add this repo as submodule
 
 ```bash
-git submodule add https://github.com/negasus/traefik2-luascript pkg/middlewares/luascript
+git submodule add https://github.com/cnych/traefik2-luascript pkg/middlewares/luascript
 ```
 
 Add code for middleware config to file `pkg/config/middleware.go`
@@ -198,7 +191,7 @@ Add code for register middleware to `pkg/server/middleware/middlewares.go`
 ```go
 import (
   // ...
-	"github.com/containous/traefik/pkg/middlewares/luascript"  
+	"github.com/containous/traefik/v2/pkg/middlewares/luascript"  
   // ...
 )
 
@@ -236,26 +229,21 @@ build -o ./traefik ./cmd/traefik
 Create config file `config.toml`
 
 ```toml
-[providers]
-   [providers.file]
-
 [http.routers]
   [http.routers.router1]
-    Service = "service1"
-    Middlewares = ["example-luascript"]
-    Rule = "Host(`localhost`)"
+    service = "service1"
+    middlewares = ["example-luascript"]
+    rule = "Host(`localhost`)"
 
 [http.middlewares]
- [http.middlewares.example-luascript.LuaScript]
+ [http.middlewares.example-luascript.lua]
     script = "example.lua"
 
 [http.services]
  [http.services.service1]
-   [http.services.service1.LoadBalancer]
-
-     [[http.services.service1.LoadBalancer.Servers]]
-       URL = "https://api.github.com/users/octocat/orgs"
-       Weight = 1
+   [http.services.service1.loadBalancer]
+     [[http.services.service1.LoadBalancer.servers]]
+       url = "https://www.baidu.com"
 ```
 
 Create lua script `example.lua`
@@ -265,13 +253,13 @@ local http = require('http')
 local log = require('log')
 
 log.warn('Hello from LUA script')
-http.setResponseHeader('X-New-Response-Header', 'Woohoo')
+http.setResponseHeader('X-New-Response-Header', 'QikQiak')
 ```
 
 Run traefik
 
 ```bash
-./traefik -c config.toml --log.loglevel=warn
+./traefik --providers.file.filename=config.toml --log.level=warn
 ```
 
 Call traefik (from another terminal)
@@ -286,11 +274,11 @@ And as result we see traefik log
 WARN[...] Hello from LUA script 	middlewareName=file.example-luascript middlewareType=LuaScript
 ```
 
-and response from github API with our header
+and response from baidu.com with our header
 
 ```
 ...
-< X-New-Response-Header: Woohoo
+< X-New-Response-Header: QikQiak
 ...
 ```
 
